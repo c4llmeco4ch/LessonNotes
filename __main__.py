@@ -16,3 +16,6 @@ def printLessons(date: datetime, displayNotes = False: bool) -> None:
 def addNotes(student: str, date = today: datetime) -> bool:
     """Take in user inputs to send notes for a given student"""
     pass
+
+
+def runner():
