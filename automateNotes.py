@@ -1,7 +1,9 @@
 import selenium, sys, getopt  #, typing
 from selenium import webdriver
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+from selenium.webdriver.common.keys import Keys
 from datetime import date
+
 '''
 from typing import TypeVar
 DT = TypeVar('DT', date)
@@ -18,10 +20,12 @@ def printLessons(driver = browser, day = datetime.today(), displayNotes = False)
     For a given day, print out the names of the students
     If 'displayNotes' is true, also show the past lesson's note
     """
-    pass
+    lessonTable = driver.find_element_by_id("schedule-list")
+    for lesson in lessonTable.find_elements_by_class("event_name"):
+        print(lesson.text)
 
 
-def checkLogin(driver = browser, day = datetime.today()):
+def checkLogin(driver = browser, day = datetime.today()) -> bool:
     """
     Check that the user is logged in
     If not, log in using provided credentials
@@ -30,9 +34,16 @@ def checkLogin(driver = browser, day = datetime.today()):
     url = 'https://tcs-sanramon.pike13.com/today'
     url += ('#/list?dt={year}-{month}-{day}').format(year=day.year, month=day.month, day=day.day)
     driver.get(url)
-    if 'sign_in' in driver.current_url:
-        pass
+    return 'sign_in' in driver.current_url
     
+
+def completeLogin(driver = browser):
+    """Log in to Pike13 using the provided credentials"""
+    credentials = []
+    with open('credentials.txt') as login:
+        credentials = login.read().split(":")
+    driver.find_element_by_id("account_email").send_keys(credentials[0])
+    driver.find_element_by_id("account_password").send_keys(credentials[1] + Keys.RETURN)
 
 
 def addNotes(student, day = datetime.today()):
@@ -60,7 +71,9 @@ def printHelp():
 
 def main(args):
     optArgs, regArgs = getopt.getopt(args, OPTIONS, LONG_OPTIONS)
-    checkLogin()
+    if not checkLogin():
+        completeLogin()
+    
 
 
 if __name__ == "__main__":
