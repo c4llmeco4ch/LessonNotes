@@ -7,7 +7,7 @@ from selenium.webdriver.firefox.options import Options
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from datetime import date
+from datetime import date, time
 
 '''
 from typing import TypeVar
@@ -41,6 +41,8 @@ def timer(tag, value, length, driver=browser):
         loc = (By.CLASS_NAME, value)
     elif tag == 'xpath':
         loc = (By.XPATH, value)
+    elif tag == 'tag_name':
+        loc = (By.TAG_NAME, value)
     try:
         foundElement = EC.presence_of_element_located(loc)
         WebDriverWait(driver, timeout).until(foundElement)
@@ -59,9 +61,17 @@ def printLessons(driver = browser, day = date.today(), displayNotes = False):
     """
     timer('id', 'schedule-list', 10)
     lessonTable = driver.find_element_by_id('schedule-list')
-    print(len(lessonTable.find_elements_by_tag_name('tr')))
+    timePassed = 0
+    while 'Loading' in lessonTable.text:
+        if timePassed % 600 < 1:
+            print('Loading...')
     for lesson in lessonTable.find_elements_by_tag_name('tr'):
-        print(lesson.text)
+        student = lesson.find_element_by_css_selector('strong.ng-binding')
+        time = [lesson.find_element_by_xpath('//*[@id="schedule-list"]/tbody/tr[2]/td[1]/span[1]'),
+                lesson.find_element_by_xpath('//*[@id="schedule-list"]/tbody/tr[2]/td[1]/span[2]')]
+        print(len(student))  # TODO: Figure out why we can't find student names
+        print('|{start} - {end}: {name}|'.format(start=time[0].text,
+                                                 end=time[1].text,name=student.text))
 
 
 def checkLogin(driver = browser, day = date.today()) -> bool:
@@ -94,7 +104,7 @@ def addNotes(student, day = date.today()):
 
 def printHelp():
     """The help message for using this module"""
-    print('Options: '
+    print('Options:\n'
           + '-h: Display this message'
           + '-d or --day: Assumed today, the day in "yyyy-mm-dd" format\n'
           + '-p or --print: Print the lessons for the day\n'
@@ -114,7 +124,7 @@ def main(args):
             browser.quit()
             sys.exit()
         elif opt in ('-d', '--day'):
-            day = arg
+            day = arg.split('-')
         elif opt in ('-p', '--print'):
             arePrinting = True
         elif opt in ('-n', '--notes'):
