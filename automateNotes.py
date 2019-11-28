@@ -1,4 +1,7 @@
-import selenium, sys, getopt  #, typing
+import selenium
+import sys
+import getopt 
+# import typing
 from selenium import webdriver
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from selenium.webdriver.common.keys import Keys
@@ -59,12 +62,19 @@ def printLessons(driver = browser, day = date.today(), displayNotes = False):
     For a given day, print out the names of the students
     If 'displayNotes' is true, also show the past lesson's note
     """
+    print(day)
+    url = ''.join(['https://tcs-sanramon.pike13.com/today',
+                   '#/list?dt={year}-{month}-{day}&lt=staff'.format(
+                    year=day.year, month=day.month, day=day.day)])
+    driver.get(url)
     timer('id', 'schedule-list', 10)
     lessonTable = driver.find_element_by_id('schedule-list')
     timePassed = 0
     while 'Loading' in lessonTable.text:
         if timePassed % 600 < 1:
             print('Loading...')
+    lessons = lessonTable.find_elements_by_tag_name('tr')
+    print('%d lessons on this day ' % len(lessons))
     for lesson in lessonTable.find_elements_by_tag_name('tr'):
         student = lesson.find_element_by_css_selector('strong.ng-binding')
         time = [lesson.find_element_by_xpath('//*[@id="schedule-list"]/tbody/tr[2]/td[1]/span[1]'),
@@ -74,16 +84,15 @@ def printLessons(driver = browser, day = date.today(), displayNotes = False):
                                                  end=time[1].text,name=student.text))
 
 
-def checkLogin(driver = browser, day = date.today()) -> bool:
+def checkLogin(driver = browser) -> bool:
     """
     Check that the user is logged in
     If not, log in using provided credentials
     Or prompt the user for credentials
     """
     url = 'https://tcs-sanramon.pike13.com/today'
-    url += ('#/list?dt={year}-{month}-{day}').format(year=day.year, month=day.month, day=day.day)
     driver.get(url)
-    print('sign_in' in driver.current_url)
+    assert 'sign_in' in driver.current_url
     return 'sign_in' in driver.current_url
 
 
@@ -95,7 +104,7 @@ def completeLogin(driver = browser):
     timer('id', 'account_email', 5)
     driver.find_element_by_id('account_email').send_keys(credentials[0])
     driver.find_element_by_id('account_password').send_keys(credentials[1] + Keys.RETURN)
-
+    timer('id', 'today_content', 10)
 
 def addNotes(student, day = date.today()):
     """Take in user inputs to send notes for a given student"""
@@ -125,6 +134,7 @@ def main(args):
             sys.exit()
         elif opt in ('-d', '--day'):
             day = arg.split('-')
+            day = date(int(day[0]), int(day[1]), int(day[2]))
         elif opt in ('-p', '--print'):
             arePrinting = True
         elif opt in ('-n', '--notes'):
