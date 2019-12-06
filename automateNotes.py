@@ -1,6 +1,7 @@
 import selenium
 import sys
 import getopt 
+from time import sleep
 # import typing
 from selenium import webdriver
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
@@ -73,13 +74,14 @@ def printLessons(driver = browser, day = date.today(), displayNotes = False):
     while 'Loading' in lessonTable.text:
         if timePassed % 600 < 1:
             print('Loading...')
-    lessons = lessonTable.find_elements_by_tag_name('tr')
+    sleep(1)
+    lessons = lessonTable.find_elements_by_class_name('ng-scope')
     print('%d lessons on this day ' % len(lessons))
-    for lesson in lessonTable.find_elements_by_tag_name('tr'):
-        student = lesson.find_element_by_css_selector('strong.ng-binding')
+    for lesson in lessons:
+        student = lesson.find_element_by_xpath('//*[@id="schedule-list"]/tbody/tr[2]/td[2]/div/a/strong')
         time = [lesson.find_element_by_xpath('//*[@id="schedule-list"]/tbody/tr[2]/td[1]/span[1]'),
                 lesson.find_element_by_xpath('//*[@id="schedule-list"]/tbody/tr[2]/td[1]/span[2]')]
-        print(len(student))  # TODO: Figure out why we can't find student names
+        print(student)  # TODO: Figure out why we can't find student names
         print('|{start} - {end}: {name}|'.format(start=time[0].text,
                                                  end=time[1].text,name=student.text))
 
